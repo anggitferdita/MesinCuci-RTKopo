@@ -78,10 +78,26 @@
       <h2 class="font-bold text-amber-900 text-sm mb-3">Panel Admin / Pak RT — Daftarkan Warga</h2>
       <form onsubmit="handleAddResident(event)" class="space-y-2.5 text-sm">
         <div class="grid grid-cols-3 gap-2">
-          <input type="number" id="inRoom" min="1" max="14" placeholder="Room (1-14)" required class="col-span-1 p-2 rounded border bg-white" />
-          <input type="text" id="inNama" placeholder="Nama Warga / KK" required class="col-span-2 p-2 rounded border bg-white" />
+          <select id="inRoom" required class="col-span-1 p-2 rounded border bg-white">
+            <option value="" disabled selected>Room</option>
+            <option value="Atorie A">A</option>
+            <option value="Atorie B">B</option>
+            <option value="Atorie C">C</option>
+            <option value="Atorie D">D</option>
+            <option value="101">101</option>
+            <option value="102">102</option>
+            <option value="103">103</option>
+            <option value="105">105</option>
+            <option value="106">106</option>
+            <option value="201">201</option>
+            <option value="202">202</option>
+            <option value="203">203</option>
+            <option value="205">205</option>
+            <option value="206">206</option>
+          </select>
+          <input type="text" id="inNama" placeholder="Nama" required class="col-span-2 p-2 rounded border bg-white" />
         </div>
-        <input type="email" id="inEmail" placeholder="Alamat Gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
+        <input type="email" id="inEmail" placeholder="Alamat gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
         <button type="submit" id="btnAddWarga" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg">
           Simpan Warga Baru
         </button>
