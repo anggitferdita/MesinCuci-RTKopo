@@ -104,8 +104,8 @@
       </form>
     </section>
 
-    <!-- Dashboard Rekap & Riwayat Detail Pemakaian -->
-    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <!-- Dashboard Rekap & Riwayat Detail Pemakaian (Tersembunyi jika belum login) -->
+    <section id="recapSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
       <div class="flex justify-between items-center mb-3 gap-2">
         <div>
           <h2 class="font-bold text-sm">Rekap Pemakaian</h2>
@@ -133,8 +133,8 @@
       </div>
     </section>
 
-    <!-- Daftar Penghuni Aktif (Privasi Aman) -->
-    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <!-- Daftar Penghuni Aktif (Tersembunyi jika belum login) -->
+    <section id="residentSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
       <h2 class="font-bold text-sm mb-2">Daftar Penghuni Aktif RT Kopo</h2>
       <div id="residentList" class="grid grid-cols-2 gap-2 text-xs">
         <p class="text-slate-400">Memuat daftar penghuni...</p>
@@ -217,6 +217,8 @@
       const userBadge = document.getElementById('userBadge');
       const generalLogin = document.getElementById('generalLoginCard');
       const adminPanel = document.getElementById('adminPanel');
+      const recapSection = document.getElementById('recapSection');
+      const residentSection = document.getElementById('residentSection');
       const btnStartQr = document.getElementById('btnStartQrWash');
       const qrLogin = document.getElementById('qrLoginContainer');
       const qrInst = document.getElementById('qrInstruction');
@@ -227,6 +229,8 @@
         userBadge.classList.remove('hidden');
         document.getElementById('userNameDisplay').textContent = `${currentUser.nama} (Room ${currentUser.room})`;
         generalLogin.classList.add('hidden');
+        recapSection.classList.remove('hidden');
+        residentSection.classList.remove('hidden');
         filterRoomBtn.textContent = `Room ${currentUser.room}`;
 
         if (currentUser.role === 'Admin') {
@@ -246,6 +250,8 @@
       } else {
         userBadge.classList.add('hidden');
         adminPanel.classList.add('hidden');
+        recapSection.classList.add('hidden');
+        residentSection.classList.add('hidden');
         filterAllBtn.classList.add('hidden');
         historyScope = 'mine';
 
