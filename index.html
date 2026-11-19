@@ -264,7 +264,14 @@
           badge.textContent = 'Terpakai';
           badge.className = 'text-xs px-2 py-0.5 rounded-full font-semibold bg-rose-100 text-rose-700';
           text.innerHTML = `Dipakai <b>${info.user}</b> (Room ${info.room})<br>Est. selesai: <b>${info.selesai}</b>`;
-          if (currentUser) {
+
+          // Tombol hanya muncul jika user yang login adalah pemakai mesin saat ini
+          const isMySession = currentUser && (
+            (info.email && currentUser.email.toLowerCase() === info.email.toLowerCase()) ||
+            (!info.email && currentUser.nama === info.user && currentUser.room === info.room)
+          );
+
+          if (isMySession) {
             act.innerHTML = `<button onclick="finishWash('${info.idLog}')" class="w-full py-1.5 rounded border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50">Tandai Selesai</button>`;
           }
         }
