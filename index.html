@@ -14,7 +14,7 @@
     <div class="max-w-lg mx-auto flex justify-between items-center">
       <div>
         <h1 class="font-bold text-lg">Mesin Cuci RT Kopo</h1>
-        <p class="text-xs text-slate-300">Sistem Pencatatan Penggunaan Mesin Cuci Warga RT Kopo</p>
+        <p class="text-xs text-slate-300">Aplikasi Pencatatan Penggunaan Mesin Cuci Warga RT Kopo</p>
       </div>
       <div id="userBadge" class="hidden text-right">
         <span id="userNameDisplay" class="text-sm font-semibold block"></span>
@@ -85,6 +85,7 @@
               <option value="B">B</option>
               <option value="C">C</option>
               <option value="D">D</option>
+            </optgroup>
             <optgroup label="Kopo Asahigaoka">
               <option value="101">101</option>
               <option value="102">102</option>
@@ -96,10 +97,11 @@
               <option value="203">203</option>
               <option value="205">205</option>
               <option value="206">206</option>
+            </optgroup>
           </select>
-          <input type="text" id="inNama" placeholder="Nama Warga / KK" required class="col-span-2 p-2 rounded border bg-white" />
+          <input type="text" id="inNama" placeholder="Nama Warga" required class="col-span-2 p-2 rounded border bg-white" />
         </div>
-        <input type="email" id="inEmail" placeholder="Alamat Gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
+        <input type="email" id="inEmail" placeholder="Alamat gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
         <button type="submit" id="btnAddWarga" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg">
           Simpan Warga Baru
         </button>
