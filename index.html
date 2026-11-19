@@ -118,12 +118,13 @@
         </div>
       </div>
 
-      <!-- Filter Sub-Tab Khusus Riwayat (Milik Saya vs Semua) -->
-      <div id="historyFilterBar" class="hidden mb-2.5 flex items-center justify-between bg-slate-50 p-1.5 rounded-lg text-xs">
-        <span class="text-slate-500 pl-1">Tampilkan log:</span>
-        <div class="flex gap-1">
+      <!-- Filter Sub-Tab Khusus Riwayat -->
+      <div id="historyFilterBar" class="hidden mb-2.5 flex items-center justify-between bg-slate-50 p-1.5 rounded-lg text-xs gap-1">
+        <span class="text-slate-500 pl-1">Filter:</span>
+        <div class="flex gap-1 flex-wrap justify-end">
           <button id="filterMine" onclick="switchHistoryScope('mine')" class="px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold">Milik Saya</button>
-          <button id="filterAll" onclick="switchHistoryScope('all')" class="px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Semua Warga</button>
+          <button id="filterRoom" onclick="switchHistoryScope('room')" class="px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Room Saya</button>
+          <button id="filterAll" onclick="switchHistoryScope('all')" class="hidden px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Semua Warga</button>
         </div>
       </div>
 
@@ -219,12 +220,23 @@
       const btnStartQr = document.getElementById('btnStartQrWash');
       const qrLogin = document.getElementById('qrLoginContainer');
       const qrInst = document.getElementById('qrInstruction');
+      const filterRoomBtn = document.getElementById('filterRoom');
+      const filterAllBtn = document.getElementById('filterAll');
 
       if (currentUser) {
         userBadge.classList.remove('hidden');
         document.getElementById('userNameDisplay').textContent = `${currentUser.nama} (Room ${currentUser.room})`;
         generalLogin.classList.add('hidden');
-        if (currentUser.role === 'Admin') adminPanel.classList.remove('hidden');
+        filterRoomBtn.textContent = `Room ${currentUser.room}`;
+
+        if (currentUser.role === 'Admin') {
+          adminPanel.classList.remove('hidden');
+          filterAllBtn.classList.remove('hidden');
+        } else {
+          adminPanel.classList.add('hidden');
+          filterAllBtn.classList.add('hidden');
+          if (historyScope === 'all') historyScope = 'mine';
+        }
 
         if (scannedMachine) {
           qrLogin.classList.add('hidden');
@@ -234,12 +246,19 @@
       } else {
         userBadge.classList.add('hidden');
         adminPanel.classList.add('hidden');
+        filterAllBtn.classList.add('hidden');
+        historyScope = 'mine';
+
         if (scannedMachine) {
           generalLogin.classList.add('hidden');
           qrInst.textContent = `Silakan login dengan Gmail terdaftar untuk memakai Mesin ${scannedMachine}.`;
         } else {
           generalLogin.classList.remove('hidden');
         }
+      }
+
+      if (recapMode === 'history') {
+        switchRecap('history');
       }
     }
 
@@ -309,21 +328,27 @@
       const filterBar = document.getElementById('historyFilterBar');
       if (mode === 'history' && currentUser) {
         filterBar.classList.remove('hidden');
+        switchHistoryScope(historyScope);
       } else {
         filterBar.classList.add('hidden');
+        renderRecapList();
       }
-
-      renderRecapList();
     }
 
     function switchHistoryScope(scope) {
+      if (scope === 'all' && (!currentUser || currentUser.role !== 'Admin')) {
+        scope = 'mine';
+      }
       historyScope = scope;
-      document.getElementById('filterMine').className = scope === 'mine'
-        ? 'px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold'
-        : 'px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200';
-      document.getElementById('filterAll').className = scope === 'all'
-        ? 'px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold'
-        : 'px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200';
+
+      const activeBtn = 'px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold';
+      const inactiveBtn = 'px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200';
+      const isAdmin = currentUser && currentUser.role === 'Admin';
+
+      document.getElementById('filterMine').className = scope === 'mine' ? activeBtn : inactiveBtn;
+      document.getElementById('filterRoom').className = scope === 'room' ? activeBtn : inactiveBtn;
+      document.getElementById('filterAll').className = (isAdmin ? '' : 'hidden ') + (scope === 'all' ? activeBtn : inactiveBtn);
+
       renderRecapList();
     }
 
@@ -333,13 +358,29 @@
 
       // Mode 3: Riwayat Detail Waktu Pemakaian
       if (recapMode === 'history') {
+        if (!currentUser) {
+          listEl.innerHTML = '<p class="text-xs text-slate-500 py-3 text-center">Silakan login dengan akun Gmail terdaftar untuk melihat riwayat pemakaian Anda.</p>';
+          return;
+        }
+
         let logs = dashboardData.recap.history || [];
-        if (currentUser && historyScope === 'mine') {
+        if (currentUser.role !== 'Admin' && historyScope === 'all') {
+          historyScope = 'mine';
+        }
+
+        if (historyScope === 'mine') {
           logs = logs.filter(item => item.nama === currentUser.nama && item.room === currentUser.room);
+        } else if (historyScope === 'room') {
+          logs = logs.filter(item => item.room === currentUser.room);
         }
 
         if (!logs.length) {
-          listEl.innerHTML = '<p class="text-xs text-slate-400 py-3">Belum ada riwayat pemakaian pada filter ini.</p>';
+          const emptyMsg = historyScope === 'mine'
+            ? 'Anda belum memiliki riwayat pemakaian bulan ini.'
+            : (historyScope === 'room'
+                ? `Belum ada riwayat pemakaian untuk Room ${currentUser.room} bulan ini.`
+                : 'Belum ada riwayat pemakaian warga bulan ini.');
+          listEl.innerHTML = `<p class="text-xs text-slate-400 py-3">${emptyMsg}</p>`;
           return;
         }
 
