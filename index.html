@@ -14,7 +14,7 @@
     <div class="max-w-lg mx-auto flex justify-between items-center">
       <div>
         <h1 class="font-bold text-lg">Mesin Cuci RT Kopo</h1>
-        <p class="text-xs text-slate-300">Aplikasi Pencatatan Penggunaan Mesin Cuci RT Kopo</p>
+        <p class="text-xs text-slate-300">Sistem Pencatatan & Monitoring Warga</p>
       </div>
       <div id="userBadge" class="hidden text-right">
         <span id="userNameDisplay" class="text-sm font-semibold block"></span>
@@ -80,22 +80,20 @@
         <div class="grid grid-cols-3 gap-2">
           <select id="inRoom" required class="col-span-1 p-2 rounded border bg-white">
             <option value="" disabled selected>Room</option>
-            <optgroup label="Kopo Atorie">
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-              <option value="D">D</option>
-            <optgroup label="Kopo Asahigaoka">
-              <option value="101">101</option>
-              <option value="102">102</option>
-              <option value="103">103</option>
-              <option value="105">105</option>
-              <option value="106">106</option>
-              <option value="201">201</option>
-              <option value="202">202</option>
-              <option value="203">203</option>
-              <option value="205">205</option>
-              <option value="206">206</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="101">101</option>
+            <option value="102">102</option>
+            <option value="103">103</option>
+            <option value="105">105</option>
+            <option value="106">106</option>
+            <option value="201">201</option>
+            <option value="202">202</option>
+            <option value="203">203</option>
+            <option value="205">205</option>
+            <option value="206">206</option>
           </select>
           <input type="text" id="inNama" placeholder="Nama Warga / KK" required class="col-span-2 p-2 rounded border bg-white" />
         </div>
@@ -109,14 +107,32 @@
     <!-- Dashboard Rekap & Riwayat Detail Pemakaian (Tersembunyi jika belum login) -->
     <section id="recapSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
       <div class="flex justify-between items-center mb-3 gap-2">
-        <div>
-          <h2 class="font-bold text-sm">Rekap Pemakaian</h2>
-          <p id="recapPeriod" class="text-xs text-slate-500">Bulan ini</p>
-        </div>
+        <h2 class="font-bold text-sm">Rekap Pemakaian</h2>
         <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs">
           <button id="tabRoom" onclick="switchRecap('room')" class="px-2.5 py-1 rounded-md bg-white shadow font-semibold">Per Room</button>
           <button id="tabUser" onclick="switchRecap('user')" class="px-2.5 py-1 rounded-md text-slate-600">Per User</button>
           <button id="tabHistory" onclick="switchRecap('history')" class="px-2.5 py-1 rounded-md text-slate-600">Riwayat</button>
+        </div>
+      </div>
+
+      <!-- Filter Rentang Tanggal -->
+      <div class="mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-600">Periode Tanggal:</span>
+          <div class="flex gap-1.5 text-[11px]">
+            <button type="button" id="btnPresetMonth" onclick="setPresetPeriod('month')" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Bulan Ini</button>
+            <button type="button" id="btnPresetAll" onclick="setPresetPeriod('all')" class="px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300">Semua</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label for="startDate" class="block text-[11px] text-slate-400 mb-0.5">Dari tanggal</label>
+            <input type="date" id="startDate" onchange="onDateRangeChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
+          </div>
+          <div>
+            <label for="endDate" class="block text-[11px] text-slate-400 mb-0.5">Sampai tanggal</label>
+            <input type="date" id="endDate" onchange="onDateRangeChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
+          </div>
         </div>
       </div>
 
@@ -155,6 +171,7 @@
     let dashboardData = null;
     let recapMode = 'room';
     let historyScope = 'mine';
+    let dateInitialized = false;
 
     const params = new URLSearchParams(window.location.search);
     const rawMesin = (params.get('mesin') || '').toLowerCase();
@@ -274,10 +291,71 @@
       try {
         const res = await fetch(GAS_URL);
         dashboardData = await res.json();
-        if (dashboardData.success) renderDashboard();
+        if (dashboardData.success) {
+          if (!dateInitialized) {
+            setPresetPeriod('month', false);
+            dateInitialized = true;
+          }
+          renderDashboard();
+        }
       } catch (err) {
         showAlert('Gagal memuat data terbaru dari server.', 'error');
       }
+    }
+
+    function setPresetPeriod(type, shouldRender = true) {
+      const startEl = document.getElementById('startDate');
+      const endEl = document.getElementById('endDate');
+      const btnMonth = document.getElementById('btnPresetMonth');
+      const btnAll = document.getElementById('btnPresetAll');
+
+      const activePreset = 'px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold';
+      const inactivePreset = 'px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300';
+
+      if (type === 'month' && dashboardData && dashboardData.currentMonth) {
+        const [year, month] = dashboardData.currentMonth.split('-').map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+        startEl.value = `${dashboardData.currentMonth}-01`;
+        endEl.value = `${dashboardData.currentMonth}-${String(lastDay).padStart(2, '0')}`;
+        btnMonth.className = activePreset;
+        btnAll.className = inactivePreset;
+      } else {
+        startEl.value = '';
+        endEl.value = '';
+        btnMonth.className = inactivePreset;
+        btnAll.className = activePreset;
+      }
+
+      if (shouldRender) renderRecapList();
+    }
+
+    function onDateRangeChange() {
+      const inactivePreset = 'px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300';
+      document.getElementById('btnPresetMonth').className = inactivePreset;
+      document.getElementById('btnPresetAll').className = inactivePreset;
+      renderRecapList();
+    }
+
+    function getLogDateYMD(item) {
+      if (item.tanggal && /^\d{4}-\d{2}-\d{2}$/.test(item.tanggal)) {
+        return item.tanggal;
+      }
+      if (item.tanggalLabel) {
+        const parts = item.tanggalLabel.trim().split(' ');
+        if (parts.length === 3) {
+          const monthMap = {
+            Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Mei: '05',
+            Jun: '06', Jul: '07', Aug: '08', Agu: '08', Sep: '09',
+            Oct: '10', Okt: '10', Nov: '11', Dec: '12', Des: '12'
+          };
+          const m = monthMap[parts[1]];
+          if (m) return `${parts[2]}-${m}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+      if (item.endEpoch) {
+        return new Date(item.endEpoch).toLocaleDateString('en-CA', { timeZone: 'Asia/Tokyo' });
+      }
+      return '';
     }
 
     function renderDashboard() {
@@ -313,7 +391,6 @@
         }
       });
 
-      document.getElementById('recapPeriod').textContent = `Periode: ${dashboardData.recap.periode}`;
       renderRecapList();
 
       const resEl = document.getElementById('residentList');
@@ -363,6 +440,16 @@
     function renderRecapList() {
       if (!dashboardData) return;
       const listEl = document.getElementById('recapList');
+      const startVal = document.getElementById('startDate').value;
+      const endVal = document.getElementById('endDate').value;
+
+      const periodLogs = (dashboardData.allLogs || []).filter(item => {
+        const logDate = getLogDateYMD(item);
+        if (!logDate) return true;
+        if (startVal && logDate < startVal) return false;
+        if (endVal && logDate > endVal) return false;
+        return true;
+      });
 
       // Mode 3: Riwayat Detail Waktu Pemakaian
       if (recapMode === 'history') {
@@ -371,7 +458,7 @@
           return;
         }
 
-        let logs = dashboardData.recap.history || [];
+        let logs = periodLogs;
         if (currentUser.role !== 'Admin' && historyScope === 'all') {
           historyScope = 'mine';
         }
@@ -384,10 +471,10 @@
 
         if (!logs.length) {
           const emptyMsg = historyScope === 'mine'
-            ? 'Anda belum memiliki riwayat pemakaian bulan ini.'
+            ? 'Anda belum memiliki riwayat pemakaian pada rentang tanggal ini.'
             : (historyScope === 'room'
-                ? `Belum ada riwayat pemakaian untuk Room ${currentUser.room} bulan ini.`
-                : 'Belum ada riwayat pemakaian warga bulan ini.');
+                ? `Belum ada riwayat pemakaian untuk Room ${currentUser.room} pada rentang tanggal ini.`
+                : 'Belum ada riwayat pemakaian warga pada rentang tanggal ini.');
           listEl.innerHTML = `<p class="text-xs text-slate-400 py-3">${emptyMsg}</p>`;
           return;
         }
@@ -418,12 +505,27 @@
         return;
       }
 
-      // Mode 1 & 2: Rekap Per Room / Per User
-      const items = recapMode === 'room' ? dashboardData.recap.byRoom : dashboardData.recap.byUser;
-      if (!items.length) {
-        listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">Belum ada catatan pemakaian bulan ini.</p>';
+      // Mode 1 & 2: Rekap Per Room / Per User berdasarkan rentang tanggal terpilih
+      if (!periodLogs.length) {
+        listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">Belum ada catatan pemakaian pada rentang tanggal ini.</p>';
         return;
       }
+
+      const countMap = {};
+      periodLogs.forEach(item => {
+        const key = recapMode === 'room'
+          ? `Room ${item.room}`
+          : `${item.nama} (Room ${item.room})`;
+        countMap[key] = (countMap[key] || 0) + 1;
+      });
+
+      const items = Object.entries(countMap).map(([label, total]) => ({ label, total }));
+      if (recapMode === 'room') {
+        items.sort((a, b) => a.label.localeCompare(b.label));
+      } else {
+        items.sort((a, b) => b.total - a.total);
+      }
+
       listEl.innerHTML = items.map(item => `
         <div class="py-2 flex justify-between items-center">
           <span>${item.label}</span>
