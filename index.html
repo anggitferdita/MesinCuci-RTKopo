@@ -342,12 +342,20 @@
     }
 
     async function postToGas(bodyObj) {
-      const res = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(bodyObj)
-      });
-      return await res.json();
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(bodyObj)
+        });
+        const text = await res.text();
+        return JSON.parse(text);
+      } catch (err) {
+        return {
+          success: false,
+          message: 'Gagal terhubung ke server Spreadsheet. Cek kembali GAS_URL (/exec) dan izin Deploy (Anyone).'
+        };
+      }
     }
 
     function logout() {
