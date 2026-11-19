@@ -115,24 +115,36 @@
         </div>
       </div>
 
-      <!-- Filter Rentang Tanggal -->
-      <div class="mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-2">
+      <!-- Tampilan Periode Khusus Warga Biasa (Read-only sesuai setelan Admin) -->
+      <div id="userPeriodBanner" class="hidden mb-3 bg-indigo-50/70 border border-indigo-100 px-3 py-2 rounded-lg flex items-center justify-between text-xs">
+        <span class="text-slate-600">Periode Aktif:</span>
+        <span id="userPeriodLabel" class="font-bold text-indigo-700">-</span>
+      </div>
+
+      <!-- Filter Rentang Tanggal Khusus Admin / Pak RT -->
+      <div id="adminPeriodControls" class="hidden mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-2.5">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-slate-600">Periode Tanggal:</span>
+          <span class="text-xs font-medium text-slate-600">Filter Tanggal (Admin):</span>
           <div class="flex gap-1.5 text-[11px]">
-            <button type="button" id="btnPresetMonth" onclick="setPresetPeriod('month')" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Bulan Ini</button>
+            <button type="button" id="btnPresetActive" onclick="setPresetPeriod('active')" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Periode Warga</button>
             <button type="button" id="btnPresetAll" onclick="setPresetPeriod('all')" class="px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300">Semua</button>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div>
             <label for="startDate" class="block text-[11px] text-slate-400 mb-0.5">Dari tanggal</label>
-            <input type="date" id="startDate" onchange="onDateRangeChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
+            <input type="date" id="startDate" onchange="onStartDateChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
           </div>
           <div>
             <label for="endDate" class="block text-[11px] text-slate-400 mb-0.5">Sampai tanggal</label>
-            <input type="date" id="endDate" onchange="onDateRangeChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
+            <input type="date" id="endDate" disabled onchange="onEndDateChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
           </div>
+        </div>
+        <div class="pt-1 border-t border-slate-200/80 flex items-center justify-between gap-2">
+          <span id="activePeriodHint" class="text-[11px] text-slate-500">Periode warga: -</span>
+          <button type="button" id="btnSaveActivePeriod" onclick="saveActivePeriod()" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-[11px] font-semibold shrink-0">
+            Terapkan ke Warga
+          </button>
         </div>
       </div>
 
@@ -238,6 +250,8 @@
       const adminPanel = document.getElementById('adminPanel');
       const recapSection = document.getElementById('recapSection');
       const residentSection = document.getElementById('residentSection');
+      const adminPeriodControls = document.getElementById('adminPeriodControls');
+      const userPeriodBanner = document.getElementById('userPeriodBanner');
       const btnStartQr = document.getElementById('btnStartQrWash');
       const qrLogin = document.getElementById('qrLoginContainer');
       const qrInst = document.getElementById('qrInstruction');
@@ -254,9 +268,13 @@
 
         if (currentUser.role === 'Admin') {
           adminPanel.classList.remove('hidden');
+          adminPeriodControls.classList.remove('hidden');
+          userPeriodBanner.classList.add('hidden');
           filterAllBtn.classList.remove('hidden');
         } else {
           adminPanel.classList.add('hidden');
+          adminPeriodControls.classList.add('hidden');
+          userPeriodBanner.classList.remove('hidden');
           filterAllBtn.classList.add('hidden');
           if (historyScope === 'all') historyScope = 'mine';
         }
@@ -271,6 +289,8 @@
         adminPanel.classList.add('hidden');
         recapSection.classList.add('hidden');
         residentSection.classList.add('hidden');
+        adminPeriodControls.classList.add('hidden');
+        userPeriodBanner.classList.add('hidden');
         filterAllBtn.classList.add('hidden');
         historyScope = 'mine';
 
@@ -292,8 +312,9 @@
         const res = await fetch(GAS_URL);
         dashboardData = await res.json();
         if (dashboardData.success) {
+          updatePeriodLabels();
           if (!dateInitialized) {
-            setPresetPeriod('month', false);
+            setPresetPeriod('active', false);
             dateInitialized = true;
           }
           renderDashboard();
@@ -303,37 +324,115 @@
       }
     }
 
+    function formatIndoDate(yyyyMmDd) {
+      if (!yyyyMmDd || !/^\d{4}-\d{2}-\d{2}$/.test(yyyyMmDd)) return '-';
+      const [y, m, d] = yyyyMmDd.split('-');
+      const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      return `${d} ${bulan[parseInt(m, 10) - 1] || m} ${y}`;
+    }
+
+    function updatePeriodLabels() {
+      if (!dashboardData || !dashboardData.activePeriod) return;
+      const { start, end } = dashboardData.activePeriod;
+      const rangeText = `${formatIndoDate(start)} – ${formatIndoDate(end)}`;
+      document.getElementById('userPeriodLabel').textContent = rangeText;
+      document.getElementById('activePeriodHint').textContent = `Periode warga: ${rangeText}`;
+    }
+
+    function syncDateConstraints() {
+      const startEl = document.getElementById('startDate');
+      const endEl = document.getElementById('endDate');
+      const saveBtn = document.getElementById('btnSaveActivePeriod');
+
+      if (!startEl.value) {
+        endEl.value = '';
+        endEl.min = '';
+        endEl.disabled = true;
+      } else {
+        endEl.disabled = false;
+        endEl.min = startEl.value;
+        if (endEl.value && endEl.value < startEl.value) {
+          endEl.value = '';
+        }
+      }
+
+      saveBtn.disabled = !(startEl.value && endEl.value && endEl.value >= startEl.value);
+    }
+
     function setPresetPeriod(type, shouldRender = true) {
       const startEl = document.getElementById('startDate');
       const endEl = document.getElementById('endDate');
-      const btnMonth = document.getElementById('btnPresetMonth');
+      const btnActive = document.getElementById('btnPresetActive');
       const btnAll = document.getElementById('btnPresetAll');
 
       const activePreset = 'px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold';
       const inactivePreset = 'px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300';
 
-      if (type === 'month' && dashboardData && dashboardData.currentMonth) {
-        const [year, month] = dashboardData.currentMonth.split('-').map(Number);
-        const lastDay = new Date(year, month, 0).getDate();
-        startEl.value = `${dashboardData.currentMonth}-01`;
-        endEl.value = `${dashboardData.currentMonth}-${String(lastDay).padStart(2, '0')}`;
-        btnMonth.className = activePreset;
+      if (type === 'active' && dashboardData && dashboardData.activePeriod) {
+        startEl.value = dashboardData.activePeriod.start || '';
+        endEl.value = dashboardData.activePeriod.end || '';
+        btnActive.className = activePreset;
         btnAll.className = inactivePreset;
       } else {
         startEl.value = '';
         endEl.value = '';
-        btnMonth.className = inactivePreset;
+        btnActive.className = inactivePreset;
         btnAll.className = activePreset;
       }
 
+      syncDateConstraints();
       if (shouldRender) renderRecapList();
     }
 
-    function onDateRangeChange() {
+    function onStartDateChange() {
       const inactivePreset = 'px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300';
-      document.getElementById('btnPresetMonth').className = inactivePreset;
+      document.getElementById('btnPresetActive').className = inactivePreset;
       document.getElementById('btnPresetAll').className = inactivePreset;
+      syncDateConstraints();
       renderRecapList();
+    }
+
+    function onEndDateChange() {
+      const startEl = document.getElementById('startDate');
+      const endEl = document.getElementById('endDate');
+      if (startEl.value && endEl.value && endEl.value < startEl.value) {
+        endEl.value = startEl.value;
+      }
+      const inactivePreset = 'px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300';
+      document.getElementById('btnPresetActive').className = inactivePreset;
+      document.getElementById('btnPresetAll').className = inactivePreset;
+      syncDateConstraints();
+      renderRecapList();
+    }
+
+    async function saveActivePeriod() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      if (!startDate || !endDate || endDate < startDate) {
+        showAlert('Pilih Dari tanggal dan Sampai tanggal yang valid terlebih dahulu.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSaveActivePeriod');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      const res = await postToGas({
+        action: 'setActivePeriod',
+        idToken,
+        startDate,
+        endDate
+      });
+
+      btn.textContent = 'Terapkan ke Warga';
+      syncDateConstraints();
+      showAlert(res.message, res.success ? 'success' : 'error');
+
+      if (res.success && res.activePeriod) {
+        dashboardData.activePeriod = res.activePeriod;
+        updatePeriodLabels();
+        setPresetPeriod('active', true);
+      }
     }
 
     function getLogDateYMD(item) {
@@ -440,8 +539,15 @@
     function renderRecapList() {
       if (!dashboardData) return;
       const listEl = document.getElementById('recapList');
-      const startVal = document.getElementById('startDate').value;
-      const endVal = document.getElementById('endDate').value;
+      const isAdmin = currentUser && currentUser.role === 'Admin';
+
+      // Admin bebas filter rentang; Warga biasa terkunci pada activePeriod setelan Admin
+      const startVal = isAdmin
+        ? document.getElementById('startDate').value
+        : (dashboardData.activePeriod ? dashboardData.activePeriod.start : '');
+      const endVal = isAdmin
+        ? document.getElementById('endDate').value
+        : (dashboardData.activePeriod ? dashboardData.activePeriod.end : '');
 
       const periodLogs = (dashboardData.allLogs || []).filter(item => {
         const logDate = getLogDateYMD(item);
@@ -459,7 +565,7 @@
         }
 
         let logs = periodLogs;
-        if (currentUser.role !== 'Admin' && historyScope === 'all') {
+        if (!isAdmin && historyScope === 'all') {
           historyScope = 'mine';
         }
 
@@ -471,10 +577,10 @@
 
         if (!logs.length) {
           const emptyMsg = historyScope === 'mine'
-            ? 'Anda belum memiliki riwayat pemakaian pada rentang tanggal ini.'
+            ? 'Anda belum memiliki riwayat pemakaian pada periode ini.'
             : (historyScope === 'room'
-                ? `Belum ada riwayat pemakaian untuk Room ${currentUser.room} pada rentang tanggal ini.`
-                : 'Belum ada riwayat pemakaian warga pada rentang tanggal ini.');
+                ? `Belum ada riwayat pemakaian untuk Room ${currentUser.room} pada periode ini.`
+                : 'Belum ada riwayat pemakaian warga pada periode ini.');
           listEl.innerHTML = `<p class="text-xs text-slate-400 py-3">${emptyMsg}</p>`;
           return;
         }
@@ -505,9 +611,9 @@
         return;
       }
 
-      // Mode 1 & 2: Rekap Per Room / Per User berdasarkan rentang tanggal terpilih
+      // Mode 1 & 2: Rekap Per Room / Per User
       if (!periodLogs.length) {
-        listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">Belum ada catatan pemakaian pada rentang tanggal ini.</p>';
+        listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">Belum ada catatan pemakaian pada periode ini.</p>';
         return;
       }
 
