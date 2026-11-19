@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mesin Cuci RT Kopo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white px-4 py-4 shadow">
+    <div class="max-w-lg mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="font-bold text-lg">Mesin Cuci RT Kopo</h1>
+        <p class="text-xs text-slate-300">Sistem Pencatatan & Monitoring Warga</p>
+      </div>
+      <div id="userBadge" class="hidden text-right">
+        <span id="userNameDisplay" class="text-sm font-semibold block"></span>
+        <button onclick="logout()" class="text-xs text-rose-300 underline">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-4 mt-4 space-y-5">
+
+    <!-- Notifikasi Alert -->
+    <div id="alertBox" class="hidden p-3 rounded-lg text-sm font-medium"></div>
+
+    <!-- Banner Khusus Jika Scan QR Mesin -->
+    <section id="qrActionCard" class="hidden bg-white border-2 border-indigo-500 rounded-xl p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">QR Code Terdeteksi</span>
+        <span id="qrMachineBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold"></span>
+      </div>
+      <p id="qrInstruction" class="text-sm text-slate-600 mb-3"></p>
+      <div id="qrLoginContainer" class="flex justify-center py-2"></div>
+      <button id="btnStartQrWash" onclick="startWash(scannedMachine, false)" class="hidden w-full py-3 rounded-lg font-bold text-white shadow transition">
+        Mulai Pakai Mesin Sekarang
+      </button>
+    </section>
+
+    <!-- Login Card (Jika belum login & tidak lewat QR) -->
+    <section id="generalLoginCard" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold text-sm">Identitas Warga</h2>
+        <p class="text-xs text-slate-500">Login Gmail terdaftar untuk mulai mencuci</p>
+      </div>
+      <div id="generalGoogleBtn"></div>
+    </section>
+
+    <!-- Status 2 Mesin Cuci (Real-Time) -->
+    <section class="grid grid-cols-2 gap-3">
+      <!-- Mesin Hijau -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-emerald-500">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-emerald-700">Mesin Hijau</h3>
+          <span id="statusHijauBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+        </div>
+        <p id="infoHijau" class="text-xs text-slate-600 min-h-[36px]">-</p>
+        <div id="actionHijau" class="mt-3"></div>
+      </div>
+
+      <!-- Mesin Putih -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-sky-500">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-sky-700">Mesin Putih</h3>
+          <span id="statusPutihBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+        </div>
+        <p id="infoPutih" class="text-xs text-slate-600 min-h-[36px]">-</p>
+        <div id="actionPutih" class="mt-3"></div>
+      </div>
+    </section>
+
+    <!-- Panel Khusus Admin (Hanya muncul jika Role === 'Admin') -->
+    <section id="adminPanel" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-4 shadow-sm">
+      <h2 class="font-bold text-amber-900 text-sm mb-3">Panel Admin / Pak RT — Daftarkan Warga</h2>
+      <form onsubmit="handleAddResident(event)" class="space-y-2.5 text-sm">
+        <div class="grid grid-cols-3 gap-2">
+          <input type="number" id="inRoom" min="1" max="14" placeholder="Room (1-14)" required class="col-span-1 p-2 rounded border bg-white" />
+          <input type="text" id="inNama" placeholder="Nama Warga / KK" required class="col-span-2 p-2 rounded border bg-white" />
+        </div>
+        <input type="email" id="inEmail" placeholder="Alamat Gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
+        <button type="submit" id="btnAddWarga" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg">
+          Simpan Warga Baru
+        </button>
+      </form>
+    </section>
+
+    <!-- Dashboard Rekap Pemakaian -->
+    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <h2 class="font-bold text-sm">Rekap Pemakaian</h2>
+          <p id="recapPeriod" class="text-xs text-slate-500">Bulan ini</p>
+        </div>
+        <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs">
+          <button id="tabRoom" onclick="switchRecap('room')" class="px-2.5 py-1 rounded-md bg-white shadow font-semibold">Per Room</button>
+          <button id="tabUser" onclick="switchRecap('user')" class="px-2.5 py-1 rounded-md text-slate-600">Per User</button>
+        </div>
+      </div>
+      <div id="recapList" class="divide-y divide-slate-100 text-sm">
+        <p class="text-xs text-slate-400 py-2">Memuat data rekap...</p>
+      </div>
+    </section>
+
+    <!-- Daftar Penghuni Aktif (Privasi Aman) -->
+    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+      <h2 class="font-bold text-sm mb-2">Daftar Penghuni Aktif RT Kopo</h2>
+      <div id="residentList" class="grid grid-cols-2 gap-2 text-xs">
+        <p class="text-slate-400">Memuat daftar penghuni...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // === KONFIGURASI WAJIB DIISI ===
+    const CLIENT_ID = 'http://761722201769-jdrai4mcho4nubs584jopv2h2aeeh1o7.apps.googleusercontent.com/';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzlWQkgEwpTj83ejvu-AOWxF6-Ly0r50Ff1QIbhtraDzdB9-ZXcIlUfQ1VTdRV4gR8/exec';
+
+    let currentUser = JSON.parse(localStorage.getItem('rtkopo_user') || 'null');
+    let idToken = localStorage.getItem('rtkopo_token') || null;
+    let dashboardData = null;
+    let recapMode = 'room';
+
+    // Deteksi Parameter QR (?mesin=hijau atau ?mesin=putih)
+    const params = new URLSearchParams(window.location.search);
+    const rawMesin = (params.get('mesin') || '').toLowerCase();
+    const scannedMachine = rawMesin === 'hijau' ? 'Hijau' : (rawMesin === 'putih' ? 'Putih' : null);
+
+    window.onload = () => {
+      initGoogleOAuth();
+      setupQrBanner();
+      updateAuthUI();
+      fetchDashboard();
+    };
+
+    function initGoogleOAuth() {
+      if (!window.google) return setTimeout(initGoogleOAuth, 300);
+      google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: handleGoogleCredentialResponse
+      });
+
+      const targetEl = scannedMachine ? document.getElementById('qrLoginContainer') : document.getElementById('generalGoogleBtn');
+      if (!currentUser && targetEl) {
+        google.accounts.id.renderButton(targetEl, { theme: 'outline', size: 'medium', text: 'signin_with' });
+      }
+    }
+
+    async function handleGoogleCredentialResponse(response) {
+      showAlert('Memverifikasi akun Google...', 'info');
+      idToken = response.credential;
+      const res = await postToGas({ action: 'login', idToken });
+
+      if (res.success) {
+        currentUser = res.user;
+        localStorage.setItem('rtkopo_user', JSON.stringify(currentUser));
+        localStorage.setItem('rtkopo_token', idToken);
+        showAlert(`Selamat datang, ${currentUser.nama} (Room ${currentUser.room})!`, 'success');
+        updateAuthUI();
+        renderDashboard();
+      } else {
+        idToken = null;
+        showAlert(res.message, 'error');
+      }
+    }
+
+    function setupQrBanner() {
+      if (!scannedMachine) return;
+      const card = document.getElementById('qrActionCard');
+      const badge = document.getElementById('qrMachineBadge');
+      const btn = document.getElementById('btnStartQrWash');
+
+      card.classList.remove('hidden');
+      badge.textContent = `Mesin ${scannedMachine}`;
+      if (scannedMachine === 'Hijau') {
+        badge.className += ' bg-emerald-100 text-emerald-800';
+        btn.className += ' bg-emerald-600 hover:bg-emerald-700';
+      } else {
+        badge.className += ' bg-sky-100 text-sky-800';
+        btn.className += ' bg-sky-600 hover:bg-sky-700';
+      }
+    }
+
+    function updateAuthUI() {
+      const userBadge = document.getElementById('userBadge');
+      const generalLogin = document.getElementById('generalLoginCard');
+      const adminPanel = document.getElementById('adminPanel');
+      const btnStartQr = document.getElementById('btnStartQrWash');
+      const qrLogin = document.getElementById('qrLoginContainer');
+      const qrInst = document.getElementById('qrInstruction');
+
+      if (currentUser) {
+        userBadge.classList.remove('hidden');
+        document.getElementById('userNameDisplay').textContent = `${currentUser.nama} (Room ${currentUser.room})`;
+        generalLogin.classList.add('hidden');
+        if (currentUser.role === 'Admin') adminPanel.classList.remove('hidden');
+
+        if (scannedMachine) {
+          qrLogin.classList.add('hidden');
+          btnStartQr.classList.remove('hidden');
+          qrInst.textContent = `Halo ${currentUser.nama}, tekan tombol di bawah untuk mulai mencatat pemakaian Mesin ${scannedMachine}.`;
+        }
+      } else {
+        userBadge.classList.add('hidden');
+        adminPanel.classList.add('hidden');
+        if (scannedMachine) {
+          generalLogin.classList.add('hidden');
+          qrInst.textContent = `Silakan login dengan Gmail terdaftar untuk memakai Mesin ${scannedMachine}.`;
+        } else {
+          generalLogin.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function fetchDashboard() {
+      try {
+        const res = await fetch(GAS_URL);
+        dashboardData = await res.json();
+        if (dashboardData.success) renderDashboard();
+      } catch (err) {
+        showAlert('Gagal memuat data terbaru dari server.', 'error');
+      }
+    }
+
+    function renderDashboard() {
+      if (!dashboardData) return;
+
+      // Render Status Kedua Mesin
+      ['Hijau', 'Putih'].forEach(m => {
+        const info = dashboardData.machines[m];
+        const badge = document.getElementById(`status${m}Badge`);
+        const text = document.getElementById(`info${m}`);
+        const act = document.getElementById(`action${m}`);
+        act.innerHTML = '';
+
+        if (info.status === 'Idle') {
+          badge.textContent = 'Idle / Kosong';
+          badge.className = 'text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700';
+          text.textContent = 'Mesin siap digunakan.';
+          if (currentUser) {
+            act.innerHTML = `<button onclick="startWash('${m}', false)" class="w-full py-1.5 rounded bg-slate-800 text-white text-xs font-semibold">Pakai Mesin ${m}</button>`;
+          }
+        } else {
+          badge.textContent = 'Terpakai';
+          badge.className = 'text-xs px-2 py-0.5 rounded-full font-semibold bg-rose-100 text-rose-700';
+          text.innerHTML = `Dipakai <b>${info.user}</b> (Room ${info.room})<br>Est. selesai: <b>${info.selesai}</b>`;
+          if (currentUser) {
+            act.innerHTML = `<button onclick="finishWash('${info.idLog}')" class="w-full py-1.5 rounded border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50">Tandai Selesai</button>`;
+          }
+        }
+      });
+
+      // Render Rekap
+      document.getElementById('recapPeriod').textContent = `Periode: ${dashboardData.recap.periode}`;
+      renderRecapList();
+
+      // Render Penghuni Aktif
+      const resEl = document.getElementById('residentList');
+      resEl.innerHTML = dashboardData.residents.map(r => `
+        <div class="p-2 rounded bg-slate-50 border border-slate-100">
+          <span class="font-bold text-indigo-600">Room ${r.room}</span> — <span>${r.nama}</span>
+        </div>
+      `).join('');
+    }
+
+    function switchRecap(mode) {
+      recapMode = mode;
+      document.getElementById('tabRoom').className = mode === 'room' ? 'px-2.5 py-1 rounded-md bg-white shadow font-semibold' : 'px-2.5 py-1 rounded-md text-slate-600';
+      document.getElementById('tabUser').className = mode === 'user' ? 'px-2.5 py-1 rounded-md bg-white shadow font-semibold' : 'px-2.5 py-1 rounded-md text-slate-600';
+      renderRecapList();
+    }
+
+    function renderRecapList() {
+      if (!dashboardData) return;
+      const items = recapMode === 'room' ? dashboardData.recap.byRoom : dashboardData.recap.byUser;
+      const listEl = document.getElementById('recapList');
+      if (!items.length) {
+        listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">Belum ada catatan pemakaian bulan ini.</p>';
+        return;
+      }
+      listEl.innerHTML = items.map(item => `
+        <div class="py-2 flex justify-between items-center">
+          <span>${item.label}</span>
+          <span class="font-bold text-slate-800">${item.total}x cuci</span>
+        </div>
+      `).join('');
+    }
+
+    async function startWash(mesin, forceOverride) {
+      showAlert(`Mencatat pemakaian Mesin ${mesin}...`, 'info');
+      const res = await postToGas({ action: 'startWash', idToken, mesin, forceOverride });
+
+      if (res.success) {
+        showAlert(res.message, 'success');
+        fetchDashboard();
+      } else if (res.code === 'MACHINE_BUSY') {
+        if (confirm(`${res.message}\n\nApakah mesin secara fisik sudah kosong dan Anda ingin mengambil alih sesi?`)) {
+          startWash(mesin, true);
+        } else {
+          showAlert('Pencatatan dibatalkan.', 'info');
+        }
+      } else {
+        showAlert(res.message, 'error');
+        if (res.message.includes('kedaluwarsa')) logout();
+      }
+    }
+
+    async function finishWash(idLog) {
+      if (!confirm('Tandai sesi cuci ini sudah selesai sehingga mesin kembali Idle?')) return;
+      showAlert('Memperbarui status mesin...', 'info');
+      const res = await postToGas({ action: 'finishWash', idToken, idLog });
+      showAlert(res.message, res.success ? 'success' : 'error');
+      if (res.success) fetchDashboard();
+    }
+
+    async function handleAddResident(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnAddWarga');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      const res = await postToGas({
+        action: 'addResident',
+        idToken,
+        room: document.getElementById('inRoom').value,
+        nama: document.getElementById('inNama').value,
+        email: document.getElementById('inEmail').value,
+        status: 'Aktif'
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Simpan Warga Baru';
+      showAlert(res.message, res.success ? 'success' : 'error');
+      if (res.success) {
+        e.target.reset();
+        fetchDashboard();
+      }
+    }
+
+    async function postToGas(bodyObj) {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(bodyObj)
+      });
+      return await res.json();
+    }
+
+    function logout() {
+      localStorage.removeItem('rtkopo_user');
+      localStorage.removeItem('rtkopo_token');
+      currentUser = null;
+      idToken = null;
+      location.reload();
+    }
+
+    function showAlert(msg, type) {
+      const box = document.getElementById('alertBox');
+      box.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800', 'bg-sky-100', 'text-sky-800');
+      if (type === 'success') box.classList.add('bg-emerald-100', 'text-emerald-800');
+      else if (type === 'error') box.classList.add('bg-rose-100', 'text-rose-800');
+      else box.classList.add('bg-sky-100', 'text-sky-800');
+      box.textContent = msg;
+    }
+  </script>
+</body>
+</html>
