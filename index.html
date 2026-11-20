@@ -9,180 +9,182 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between pb-6">
 
-  <!-- Header -->
-  <header class="bg-slate-900 text-white px-4 py-4 shadow">
-    <div class="max-w-lg mx-auto flex justify-between items-center">
-      <div>
-        <h1 class="font-bold text-lg">Mesin Cuci RT Kopo</h1>
-        <p class="text-xs text-slate-300">Aplikasi Pencatatan Penggunaan Mesin Cuci Warga RT Kopo</p>
-      </div>
-      <div id="userBadge" class="hidden text-right">
-        <span id="userNameDisplay" class="text-sm font-semibold block"></span>
-        <button onclick="logout()" class="text-xs text-rose-300 underline">Keluar</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-lg mx-auto px-4 mt-4 space-y-5">
-
-    <!-- Notifikasi Alert -->
-    <div id="alertBox" class="hidden p-3 rounded-lg text-sm font-medium"></div>
-
-    <!-- Banner Khusus Jika Scan QR Mesin -->
-    <section id="qrActionCard" class="hidden bg-white border-2 border-indigo-500 rounded-xl p-4 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">QR Code Terdeteksi</span>
-        <span id="qrMachineBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold"></span>
-      </div>
-      <p id="qrInstruction" class="text-sm text-slate-600 mb-3"></p>
-      <div id="qrLoginContainer" class="flex justify-center py-2"></div>
-      <button id="btnStartQrWash" onclick="startWash(scannedMachine, false)" class="hidden w-full py-3 rounded-lg font-bold text-white shadow transition">
-        Mulai Pakai Mesin Sekarang
-      </button>
-    </section>
-
-    <!-- Login Card (Jika belum login & tidak lewat QR) -->
-    <section id="generalLoginCard" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
-      <div>
-        <h2 class="font-semibold text-sm">Identitas Warga</h2>
-        <p class="text-xs text-slate-500">Login Gmail terdaftar untuk mulai mencuci</p>
-      </div>
-      <div id="generalGoogleBtn"></div>
-    </section>
-
-    <!-- Status 2 Mesin Cuci (Real-Time) -->
-    <section class="grid grid-cols-2 gap-3">
-      <!-- Mesin Hijau -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-emerald-500">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-bold text-emerald-700">Mesin Hijau</h3>
-          <span id="statusHijauBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+  <div>
+    <!-- Header -->
+    <header class="bg-slate-900 text-white px-4 py-4 shadow">
+      <div class="max-w-lg mx-auto flex justify-between items-center">
+        <div>
+          <h1 class="font-bold text-lg">Mesin Cuci RT Kopo</h1>
+          <p class="text-xs text-slate-300">Aplikasi Pencatatan Penggunaan Mesin Cuci Warga RT Kopo</p>
         </div>
-        <p id="infoHijau" class="text-xs text-slate-600 min-h-[42px]">-</p>
-        <div id="actionHijau" class="mt-3"></div>
-      </div>
-
-      <!-- Mesin Putih -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-sky-500">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-bold text-sky-700">Mesin Putih</h3>
-          <span id="statusPutihBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+        <div id="userBadge" class="hidden text-right">
+          <span id="userNameDisplay" class="text-sm font-semibold block"></span>
+          <button onclick="logout()" class="text-xs text-rose-300 underline">Keluar</button>
         </div>
-        <p id="infoPutih" class="text-xs text-slate-600 min-h-[42px]">-</p>
-        <div id="actionPutih" class="mt-3"></div>
       </div>
-    </section>
+    </header>
 
-    <!-- Panel Khusus Admin (Hanya muncul jika Role === 'Admin') -->
-    <section id="adminPanel" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-4 shadow-sm">
-      <h2 class="font-bold text-amber-900 text-sm mb-3">Panel Admin / Pak RT — Daftarkan Warga</h2>
-      <form onsubmit="handleAddResident(event)" class="space-y-2.5 text-sm">
-        <div class="grid grid-cols-3 gap-2">
-          <select id="inRoom" required class="col-span-1 p-2 rounded border bg-white">
-            <option value="" disabled selected>Room</option>
-            <optgroup label="Kopo Atorie">
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-              <option value="D">D</option>
-            </optgroup>
-            <optgroup label="Kopo Asahigaoka">
-              <option value="101">101</option>
-              <option value="102">102</option>
-              <option value="103">103</option>
-              <option value="105">105</option>
-              <option value="106">106</option>
-              <option value="201">201</option>
-              <option value="202">202</option>
-              <option value="203">203</option>
-              <option value="205">205</option>
-              <option value="206">206</option>
-            </optgroup>
-          </select>
-          <input type="text" id="inNama" placeholder="Nama Warga" required class="col-span-2 p-2 rounded border bg-white" />
+    <main class="max-w-lg mx-auto px-4 mt-4 space-y-5">
+
+      <!-- Notifikasi Alert -->
+      <div id="alertBox" class="hidden p-3 rounded-lg text-sm font-medium"></div>
+
+      <!-- Banner Khusus Jika Scan QR Mesin -->
+      <section id="qrActionCard" class="hidden bg-white border-2 border-indigo-500 rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">QR Code Terdeteksi</span>
+          <span id="qrMachineBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold"></span>
         </div>
-        <input type="email" id="inEmail" placeholder="Alamat gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
-        <button type="submit" id="btnAddWarga" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg">
-          Simpan Warga Baru
+        <p id="qrInstruction" class="text-sm text-slate-600 mb-3"></p>
+        <div id="qrLoginContainer" class="flex justify-center py-2"></div>
+        <button id="btnStartQrWash" onclick="startWash(scannedMachine, false)" class="hidden w-full py-3 rounded-lg font-bold text-white shadow transition">
+          Mulai Pakai Mesin Sekarang
         </button>
-      </form>
-    </section>
+      </section>
 
-    <!-- Dashboard Rekap & Riwayat Detail Pemakaian (Tersembunyi jika belum login) -->
-    <section id="recapSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-      <div class="flex justify-between items-center mb-3 gap-2">
-        <h2 class="font-bold text-sm">Rekap Pemakaian</h2>
-        <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs">
-          <button id="tabRoom" onclick="switchRecap('room')" class="px-2.5 py-1 rounded-md bg-white shadow font-semibold">Per Room</button>
-          <button id="tabUser" onclick="switchRecap('user')" class="px-2.5 py-1 rounded-md text-slate-600">Per User</button>
-          <button id="tabHistory" onclick="switchRecap('history')" class="px-2.5 py-1 rounded-md text-slate-600">Riwayat</button>
+      <!-- Login Card (Jika belum login & tidak lewat QR) -->
+      <section id="generalLoginCard" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <h2 class="font-semibold text-sm">Identitas Warga</h2>
+          <p class="text-xs text-slate-500">Login Gmail terdaftar untuk mulai mencuci</p>
         </div>
-      </div>
+        <div id="generalGoogleBtn"></div>
+      </section>
 
-      <!-- Tampilan Periode Khusus Warga Biasa (Read-only sesuai setelan Admin) -->
-      <div id="userPeriodBanner" class="hidden mb-3 bg-indigo-50/70 border border-indigo-100 px-3 py-2 rounded-lg flex items-center justify-between text-xs">
-        <span class="text-slate-600">Periode Aktif:</span>
-        <span id="userPeriodLabel" class="font-bold text-indigo-700">-</span>
-      </div>
+      <!-- Status 2 Mesin Cuci (Real-Time) -->
+      <section class="grid grid-cols-2 gap-3">
+        <!-- Mesin Hijau -->
+        <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-emerald-500">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-emerald-700">Mesin Hijau</h3>
+            <span id="statusHijauBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+          </div>
+          <p id="infoHijau" class="text-xs text-slate-600 min-h-[42px]">-</p>
+          <div id="actionHijau" class="mt-3"></div>
+        </div>
 
-      <!-- Filter Rentang Tanggal Khusus Admin / Pak RT -->
-      <div id="adminPeriodControls" class="hidden mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-slate-600">Filter Tanggal (Admin):</span>
-          <div class="flex gap-1.5 text-[11px]">
-            <button type="button" id="btnPresetActive" onclick="setPresetPeriod('active')" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Periode Warga</button>
-            <button type="button" id="btnPresetAll" onclick="setPresetPeriod('all')" class="px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300">Semua</button>
+        <!-- Mesin Putih -->
+        <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-sky-500">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-sky-700">Mesin Putih</h3>
+            <span id="statusPutihBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
           </div>
+          <p id="infoPutih" class="text-xs text-slate-600 min-h-[42px]">-</p>
+          <div id="actionPutih" class="mt-3"></div>
         </div>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <label for="startDate" class="block text-[11px] text-slate-400 mb-0.5">Dari tanggal</label>
-            <input type="date" id="startDate" onchange="onStartDateChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
+      </section>
+
+      <!-- Panel Khusus Admin (Hanya muncul jika Role === 'Admin') -->
+      <section id="adminPanel" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-4 shadow-sm">
+        <h2 class="font-bold text-amber-900 text-sm mb-3">Panel Admin / Pak RT — Daftarkan Warga</h2>
+        <form onsubmit="handleAddResident(event)" class="space-y-2.5 text-sm">
+          <div class="grid grid-cols-3 gap-2">
+            <select id="inRoom" required class="col-span-1 p-2 rounded border bg-white">
+              <option value="" disabled selected>Room</option>
+              <optgroup label="Kopo Atorie">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </optgroup>
+              <optgroup label="Kopo Asahigaoka">
+                <option value="101">101</option>
+                <option value="102">102</option>
+                <option value="103">103</option>
+                <option value="105">105</option>
+                <option value="106">106</option>
+                <option value="201">201</option>
+                <option value="202">202</option>
+                <option value="203">203</option>
+                <option value="205">205</option>
+                <option value="206">206</option>
+              </optgroup>
+            </select>
+            <input type="text" id="inNama" placeholder="Nama Warga" required class="col-span-2 p-2 rounded border bg-white" />
           </div>
-          <div>
-            <label for="endDate" class="block text-[11px] text-slate-400 mb-0.5">Sampai tanggal</label>
-            <input type="date" id="endDate" disabled onchange="onEndDateChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
-          </div>
-        </div>
-        <div class="pt-1 border-t border-slate-200/80 flex items-center justify-between gap-2">
-          <span id="activePeriodHint" class="text-[11px] text-slate-500">Periode warga: -</span>
-          <button type="button" id="btnSaveActivePeriod" onclick="saveActivePeriod()" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-[11px] font-semibold shrink-0">
-            Terapkan ke Warga
+          <input type="email" id="inEmail" placeholder="Alamat gmail Aktif Warga" required class="w-full p-2 rounded border bg-white" />
+          <button type="submit" id="btnAddWarga" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg">
+            Simpan Warga Baru
           </button>
+        </form>
+      </section>
+
+      <!-- Dashboard Rekap & Riwayat Detail Pemakaian (Tersembunyi jika belum login) -->
+      <section id="recapSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-3 gap-2">
+          <h2 class="font-bold text-sm">Rekap Pemakaian</h2>
+          <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs">
+            <button id="tabRoom" onclick="switchRecap('room')" class="px-2.5 py-1 rounded-md bg-white shadow font-semibold">Per Room</button>
+            <button id="tabUser" onclick="switchRecap('user')" class="px-2.5 py-1 rounded-md text-slate-600">Per User</button>
+            <button id="tabHistory" onclick="switchRecap('history')" class="px-2.5 py-1 rounded-md text-slate-600">Riwayat</button>
+          </div>
         </div>
-      </div>
 
-      <!-- Filter Sub-Tab Khusus Riwayat -->
-      <div id="historyFilterBar" class="hidden mb-2.5 flex items-center justify-between bg-slate-50 p-1.5 rounded-lg text-xs gap-1">
-        <span class="text-slate-500 pl-1">Filter:</span>
-        <div class="flex gap-1 flex-wrap justify-end">
-          <button id="filterMine" onclick="switchHistoryScope('mine')" class="px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold">Milik Saya</button>
-          <button id="filterRoom" onclick="switchHistoryScope('room')" class="px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Room Saya</button>
-          <button id="filterAll" onclick="switchHistoryScope('all')" class="hidden px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Semua Warga</button>
+        <!-- Tampilan Periode Khusus Warga Biasa (Read-only sesuai setelan Admin) -->
+        <div id="userPeriodBanner" class="hidden mb-3 bg-indigo-50/70 border border-indigo-100 px-3 py-2 rounded-lg flex items-center justify-between text-xs">
+          <span class="text-slate-600">Periode Aktif:</span>
+          <span id="userPeriodLabel" class="font-bold text-indigo-700">-</span>
         </div>
-      </div>
 
-      <div id="recapList" class="divide-y divide-slate-100 text-sm max-h-80 overflow-y-auto">
-        <p class="text-xs text-slate-400 py-2">Memuat data rekap...</p>
-      </div>
-    </section>
+        <!-- Filter Rentang Tanggal Khusus Admin / Pak RT -->
+        <div id="adminPeriodControls" class="hidden mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-600">Filter Tanggal (Admin):</span>
+            <div class="flex gap-1.5 text-[11px]">
+              <button type="button" id="btnPresetActive" onclick="setPresetPeriod('active')" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Periode Warga</button>
+              <button type="button" id="btnPresetAll" onclick="setPresetPeriod('all')" class="px-2 py-0.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300">Semua</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label for="startDate" class="block text-[11px] text-slate-400 mb-0.5">Dari tanggal</label>
+              <input type="date" id="startDate" onchange="onStartDateChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium" />
+            </div>
+            <div>
+              <label for="endDate" class="block text-[11px] text-slate-400 mb-0.5">Sampai tanggal</label>
+              <input type="date" id="endDate" disabled onchange="onEndDateChange()" class="w-full p-1.5 rounded border border-slate-200 bg-white text-slate-700 font-medium disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
+            </div>
+          </div>
+          <div class="pt-1 border-t border-slate-200/80 flex items-center justify-between gap-2">
+            <span id="activePeriodHint" class="text-[11px] text-slate-500">Periode warga: -</span>
+            <button type="button" id="btnSaveActivePeriod" onclick="saveActivePeriod()" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-[11px] font-semibold shrink-0">
+              Terapkan ke Warga
+            </button>
+          </div>
+        </div>
 
-    <!-- Daftar Penghuni Aktif (Tersembunyi jika belum login) -->
-    <section id="residentSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-      <h2 class="font-bold text-sm mb-2">Daftar Penghuni Aktif RT Kopo</h2>
-      <div id="residentList" class="grid grid-cols-2 gap-2 text-xs">
-        <p class="text-slate-400">Memuat daftar penghuni...</p>
-      </div>
-    </section>
+        <!-- Filter Sub-Tab Khusus Riwayat -->
+        <div id="historyFilterBar" class="hidden mb-2.5 flex items-center justify-between bg-slate-50 p-1.5 rounded-lg text-xs gap-1">
+          <span class="text-slate-500 pl-1">Filter:</span>
+          <div class="flex gap-1 flex-wrap justify-end">
+            <button id="filterMine" onclick="switchHistoryScope('mine')" class="px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold">Milik Saya</button>
+            <button id="filterRoom" onclick="switchHistoryScope('room')" class="px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Room Saya</button>
+            <button id="filterAll" onclick="switchHistoryScope('all')" class="hidden px-2.5 py-1 rounded text-slate-600 hover:bg-slate-200">Semua Warga</button>
+          </div>
+        </div>
 
-  </main>
+        <div id="recapList" class="divide-y divide-slate-100 text-sm max-h-80 overflow-y-auto">
+          <p class="text-xs text-slate-400 py-2">Memuat data rekap...</p>
+        </div>
+      </section>
+
+      <!-- Daftar Penghuni Aktif (Tersembunyi jika belum login) -->
+      <section id="residentSection" class="hidden bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+        <h2 class="font-bold text-sm mb-2">Daftar Penghuni Aktif RT Kopo</h2>
+        <div id="residentList" class="grid grid-cols-2 gap-2 text-xs">
+          <p class="text-slate-400">Memuat daftar penghuni...</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <!-- Footer -->
   <footer class="max-w-lg mx-auto px-4 mt-10 text-center text-xs text-slate-400 space-y-1">
     <p class="font-medium text-slate-500">
-      Aplikasi Pencatatan Penggunaan Mesin Cuci RT Kopo &bull; <span class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-semibold">v1.0.0 (Beta)</span>
+      Mesin Cuci RT Kopo &bull; <span class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-semibold">v1.0.1 (Beta)</span>
     </p>
-    <p>&copy; 2026 Dikembangkan oleh <span class="font-semibold text-slate-500">eRTe Kopo</span></p>
+    <p>&copy; 2026 Dikembangkan oleh <span class="font-semibold text-slate-500">Admin eRTe Kopo</span></p>
   </footer>
 
   <script>
@@ -624,13 +626,32 @@
       }
 
       // Mode 1 & 2: Rekap Per Room / Per User
-      if (!periodLogs.length) {
-        listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">Belum ada catatan pemakaian pada periode ini.</p>';
+      if (!currentUser) {
+        listEl.innerHTML = '<p class="text-xs text-slate-500 py-3 text-center">Silakan login dengan akun Gmail terdaftar untuk melihat rekap pemakaian.</p>';
+        return;
+      }
+
+      let recapLogs = periodLogs;
+      if (!isAdmin) {
+        if (recapMode === 'room') {
+          recapLogs = periodLogs.filter(item => item.room === currentUser.room);
+        } else {
+          recapLogs = periodLogs.filter(item => item.nama === currentUser.nama && item.room === currentUser.room);
+        }
+      }
+
+      if (!recapLogs.length) {
+        const emptyRecapMsg = isAdmin
+          ? 'Belum ada catatan pemakaian pada periode ini.'
+          : (recapMode === 'room'
+              ? `Belum ada catatan pemakaian untuk Room ${currentUser.room} pada periode ini.`
+              : 'Anda belum memiliki catatan pemakaian pada periode ini.');
+        listEl.innerHTML = `<p class="text-xs text-slate-400 py-2">${emptyRecapMsg}</p>`;
         return;
       }
 
       const countMap = {};
-      periodLogs.forEach(item => {
+      recapLogs.forEach(item => {
         const key = recapMode === 'room'
           ? `Room ${item.room}`
           : `${item.nama} (Room ${item.room})`;
