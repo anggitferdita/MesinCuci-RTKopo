@@ -54,22 +54,26 @@
       <!-- Status 2 Mesin Cuci (Real-Time) -->
       <section class="grid grid-cols-2 gap-3">
         <!-- Mesin Hijau -->
-        <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-emerald-500">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-bold text-emerald-700">Mesin Hijau</h3>
-            <span id="statusHijauBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-emerald-500 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-bold text-emerald-700">Mesin Hijau</h3>
+              <span id="statusHijauBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+            </div>
+            <p id="infoHijau" class="text-xs text-slate-600 min-h-[48px]">-</p>
           </div>
-          <p id="infoHijau" class="text-xs text-slate-600 min-h-[42px]">-</p>
           <div id="actionHijau" class="mt-3"></div>
         </div>
 
         <!-- Mesin Putih -->
-        <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-sky-500">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-bold text-sky-700">Mesin Putih</h3>
-            <span id="statusPutihBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-t-4 border-sky-500 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-bold text-sky-700">Mesin Putih</h3>
+              <span id="statusPutihBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100">Memuat...</span>
+            </div>
+            <p id="infoPutih" class="text-xs text-slate-600 min-h-[48px]">-</p>
           </div>
-          <p id="infoPutih" class="text-xs text-slate-600 min-h-[42px]">-</p>
           <div id="actionPutih" class="mt-3"></div>
         </div>
       </section>
@@ -182,7 +186,7 @@
   <!-- Footer -->
   <footer class="max-w-lg mx-auto px-4 mt-10 text-center text-xs text-slate-400 space-y-1">
     <p class="font-medium text-slate-500">
-      Mesin Cuci RT Kopo &bull; <span class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-semibold">v1.0.1 (Beta)</span>
+      Mesin Cuci RT Kopo &bull; <span class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-semibold">v1.0.2 (Beta)</span>
     </p>
     <p>&copy; 2026 Dikembangkan oleh <span class="font-semibold text-slate-500">Admin eRTe Kopo</span></p>
   </footer>
@@ -484,7 +488,14 @@
         if (info.status === 'Idle') {
           badge.textContent = 'Idle / Kosong';
           badge.className = 'text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700';
-          text.textContent = 'Mesin siap digunakan.';
+
+          const lastLog = (dashboardData.allLogs || []).find(item => item.mesin === m);
+          if (lastLog) {
+            text.innerHTML = `Mesin siap digunakan.<span class="block text-[11px] text-slate-400 mt-1">Terakhir: <b class="text-slate-600">Room ${lastLog.room}</b> (${lastLog.estSelesai})</span>`;
+          } else {
+            text.textContent = 'Mesin siap digunakan.';
+          }
+
           if (currentUser) {
             act.innerHTML = `<button onclick="startWash('${m}', false)" class="w-full py-1.5 rounded bg-slate-800 text-white text-xs font-semibold">Pakai Mesin ${m}</button>`;
           }
